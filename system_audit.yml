@@ -1,0 +1,52 @@
+---
+- name: System Audit (Localhost)
+  hosts: localhost
+  gather_facts: yes
+  connection: local
+  
+  tasks:
+    - name: Display system information
+      ansible.builtin.debug:
+        msg:
+          - "========== SYSTEM INFORMATION =========="
+          - "Hostname: {{ ansible_hostname }}"
+          - "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "Kernel: {{ ansible_kernel }}"
+          - "Architecture: {{ ansible_architecture }}"
+          - "Python Version: {{ ansible_python_version }}"
+          - "========================================"
+    
+    - name: Check current user
+      ansible.builtin.command: whoami
+      register: current_user
+      changed_when: false
+    
+    - name: Display current user
+      ansible.builtin.debug:
+        msg: "Running as user: {{ current_user.stdout }}"
+    
+    - name: Check if running on macOS
+      ansible.builtin.set_fact:
+        is_macos: "{{ ansible_distribution == 'MacOSX' }}"
+    
+    - name: List home directory contents
+      ansible.builtin.find:
+        paths: "{{ ansible_env.HOME }}"
+        file_type: directory
+        hidden: no
+      register: home_dirs
+    
+    - name: Count directories in home
+      ansible.builtin.debug:
+        msg: "Found {{ home_dirs.files | length }} directories in home folder"
+    
+    - name: Generate audit summary
+      ansible.builtin.debug:
+        msg:
+          - "========== AUDIT COMPLETE =========="
+          - "System: {{ ansible_hostname }}"
+          - "OS: {{ ansible_distribution }}"
+          - "User: {{ current_user.stdout }}"
+          - "Home directories: {{ home_dirs.files | length }}"
+          - "Audit Date: {{ ansible_date_time.iso8601 }}"
+          - "===================================="
